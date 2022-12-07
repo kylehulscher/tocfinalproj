@@ -26,17 +26,24 @@ class TM:
 
 	#showTM
 	def __str__(self):
-		fullStr = "States: " + ", ".join(str(self.states)) + "\n" 
-		fullStr += "Alphabet: " + ", ".join(self.inputs) + "\n" 
-		fullStr += "Tape symbols: " + ", ".join(self.tapesyms) + "\n"
+		fullStr = "States: " + self.lsStr(self.states)
+		fullStr += "Alphabet: " + self.lsStr(self.inputs) 
+		fullStr += "Tape symbols: " + self.lsStr(self.tapesyms)
 		fullStr += "Blank: " + self.blank + "\n" 
 		fullStr += "Leftend: " + self.leftend + "\n"
 		fullStr += "Transitions: \n" 
 		for trans in self.trans:
 			fullStr += str(trans) + "\n"
 		fullStr += "Start state: "+ str(self.start) + "\n"
-		fullStr += "Final states: " + ", ".join(str(self.final))
+		fullStr += "Final states: " + self.lsStr(self.final)
 		return fullStr
+	
+	def lsStr(self, lst):
+		outStr = ""
+		for st in lst:
+			outStr += str(st) + ", "
+
+		return outStr[0:(len(outStr)-2)] + "\n"
 
 class Trans:
 	def __init__(self, sourceStates, appearTape, direction, targetState, writtenTape):
@@ -58,6 +65,7 @@ class Trans:
 class Config:
 	def __init__(self):
 		print("initialize config")
+		
 		
 	#showConfig
 	def __str__(self):
@@ -88,7 +96,6 @@ def accepts():
 	print("accepts")
 
 def main():
-	print("Hello world!")
 	#sourceStates, appearTape, direction, targetState, writtenTape
 	newTrans = []
 	newTrans.append(Trans(1, " ", 'R', 6, " ")) # checkRight 1 ' ' 6
