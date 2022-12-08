@@ -1,3 +1,6 @@
+Left = -1
+Right = 1
+
 class TM:
 	#states, a list of all the states used in the TM
 	#inputs, a list of all the input characters used
@@ -63,37 +66,72 @@ class Trans:
 		
 		
 class Config:
-	def __init__(self):
-		print("initialize config")
-		
+	def __init__(self, currState, blank, leftStr, rightStr):
+		self.currState = currState
+		self.blank = blank
+		self.leftStr = leftStr
+		self.rightStr = rightStr
 		
 	#showConfig
 	def __str__(self):
-		print("show config")
+		return "[" + str(self.currState) + ": " + '"' + self.leftStr + '"' + " " + '"' + self.rightStr + '"' + "]"
 
 class History:
-	def __init__(self):
-		print("initialize history")
+	def __init__(self, TM, steps):
+		self.tm = TM
+		self.steps = steps
+		self.cfgLst = []
 
 	#showHistory
 	def __str__(self):
-		print("show history")
+		outStr = ""
+		for i in self.cfgLst:
+			outStr += str(i) + "\n"
+		return outStr
+				
+#newTM = TM(list(range(1,7)), "abc", "abc*! ", ' ', '!', newTrans, 1, [6])
 
 #initialConfig
-def initialConfig():
-	print("initial config")
+def initialConfig(TM,inputChar):
+	return Config(TM.start, TM.blank, TM.leftend, inputChar)
 
 #configs
-def configs():
+def configs(TM, steps, inputString):
 	print("configs")
+	
 
 #accepting
-def accepting():
-	print("accepting")
+def accepting(TM, inputString):
+	currCfg = initialConfig(TM, inputString)
+	newHist = History([])
+	newHist.cfgLst.append(currCfg)
 
+	while(currCfg.currState not in TM.final):
+		newCfg = Config
+		for tr in TM.trans:
+			if tr.sourceState == currCfg.currState:
+				if len(currCfg.leftStr) > 0 and (tr.direction == Left and tr.appearTape == currCfg.leftStr[-1]):
+					newLS = currCfg.leftStr[:-1]
+					newRS = currCfg.leftStr[-1] + currCfg.rightStr
+					newCfg = Config(tr.targetState, TM.blank, newLS, newRS)
+					newHist.cfgLst.append(newCfg)
+				elif len(currCfg.rightStr) > 0 and (tr.direction == Right and tr.appearTape == currCfg.rightStr[0]): 
+					newRS = currCfg.rightStr[1:]
+					newLS = currCfg.leftStr + currCfg.rightStr[0] 
+					newCfg = Config(tr.targetState, TM.blank, newLS, newRS)
+					newHist.cfgLst.append(newCfg)
+					
+				else:
+					print("!No transition found!")
+
+	return 
+				
 #accepts
-def accepts():
-	print("accepts")
+def accepts(TM, inputString):
+	for ch in inputString:
+		if ch not in TM.alphabet:
+			return False
+	return True
 
 def main():
 	#sourceStates, appearTape, direction, targetState, writtenTape
@@ -117,8 +155,36 @@ def main():
 	newTrans.append(Trans(5, '!', 'R', 1, "!")) #checkRight 5 '!' 1
 	# list, list, list, char, char, list, state(string?), list
 	# [1 .. 6] "abc" "abc*! " ' ' '!' trans 1 [6]
+	#Example TM to work off of
 	newTM = TM(list(range(1,7)), "abc", "abc*! ", ' ', '!', newTrans, 1, [6])
 	print(newTM)
+	print("\n\n")
+	#newConfig = Config(1, " ", "!", "aabbcc")
+	#print(newConfig)
+	newConfig = initialConfig(newTM, "aabbcc")
+	print(newConfig)
+	print()
+	
+	newHist = History([])
+	for i in range(0,10):
+		newHist.cfgLst.append(newConfig)
+
+	for item in newHist.cfgLst:
+		print("[" + str(item) + "]")
+
+	# config has leftStr rightStr           "!aa bbcc"
+	# initially 				  leftStr = "!" and rightStr = "aabbcc"
+	# cursor moves right one then leftStr = "!a" rightStr = "abbcc"
 
 if __name__ == "__main__":
 	main()
+
+# For Problem 1 TM Simulator involving the History "Type". Is it supposed to generate and store all 
+# possible runs of configurations for the TM in n number of steps, or does it serve as a history for 
+# all configurations generated while running through the input string.
+#
+# We are also confused about why it's a double list when the haskell output looked something like 
+# [[1: "!a" "abbcc"]]
+# [[2: "!*a" "bbcc"]]
+# [[2: "!*ab" "bcc"]] ...
+# with only one item per outer list
