@@ -26,6 +26,7 @@ class TM:
 		self.trans = trans
 		self.start = start
 		self.final = final
+		self.history = History
 
 	#showTM
 	def __str__(self):
@@ -49,15 +50,15 @@ class TM:
 		return outStr[0:(len(outStr)-2)] + "\n"
 
 class Trans:
-	def __init__(self, sourceStates, appearTape, direction, targetState, writtenTape):
-		self.sourceStates = sourceStates
+	def __init__(self, sourceState, appearTape, direction, targetState, writtenTape):
+		self.sourceState = sourceState
 		self.appearTape = appearTape
 		self.direction = direction
 		self.targetState = targetState
 		self.writtenState = writtenTape
 
 	def __str__(self):
-		fullStr = str(self.sourceStates) + " === "
+		fullStr = str(self.sourceState) + " === "
 		fullStr += str(self.appearTape) + " / "
 		fullStr += str(self.direction) + " "
 		fullStr += str(self.targetState) + " ===> "
@@ -76,20 +77,20 @@ class Config:
 	def __str__(self):
 		return "[" + str(self.currState) + ": " + '"' + self.leftStr + '"' + " " + '"' + self.rightStr + '"' + "]"
 
+	def __repr__(self):
+   		return f'[{self.currState}: "{self.leftStr}" "{self.rightStr}"]'
+
 class History:
-	def __init__(self, TM, steps):
+	def __init__(self, TM):
 		self.tm = TM
-		self.steps = steps
 		self.cfgLst = []
 
 	#showHistory
 	def __str__(self):
 		outStr = ""
 		for i in self.cfgLst:
-			outStr += str(i) + "\n"
+			print(str(i))
 		return outStr
-				
-#newTM = TM(list(range(1,7)), "abc", "abc*! ", ' ', '!', newTrans, 1, [6])
 
 #initialConfig
 def initialConfig(TM,inputChar):
@@ -97,34 +98,40 @@ def initialConfig(TM,inputChar):
 
 #configs
 def configs(TM, steps, inputString):
-	print("configs")
+	accepting(TM, inputString, steps)
+	print("\n\n HISTORY: \n")
+	print(str(TM.history))
 	
 
 #accepting
-def accepting(TM, inputString):
-	currCfg = initialConfig(TM, inputString)
-	newHist = History([])
-	newHist.cfgLst.append(currCfg)
+def accepting(TM, inputString, steps):
+	currCfgs = [initialConfig(TM, inputString)]
+	TM.history = History([])
+	TM.history.cfgLst.append(currCfgs)
 
-	while(currCfg.currState not in TM.final):
-		newCfg = Config
-		for tr in TM.trans:
-			if tr.sourceState == currCfg.currState:
-				if len(currCfg.leftStr) > 0 and (tr.direction == Left and tr.appearTape == currCfg.leftStr[-1]):
-					newLS = currCfg.leftStr[:-1]
-					newRS = currCfg.leftStr[-1] + currCfg.rightStr
-					newCfg = Config(tr.targetState, TM.blank, newLS, newRS)
-					newHist.cfgLst.append(newCfg)
-				elif len(currCfg.rightStr) > 0 and (tr.direction == Right and tr.appearTape == currCfg.rightStr[0]): 
-					newRS = currCfg.rightStr[1:]
-					newLS = currCfg.leftStr + currCfg.rightStr[0] 
-					newCfg = Config(tr.targetState, TM.blank, newLS, newRS)
-					newHist.cfgLst.append(newCfg)
-					
-				else:
-					print("!No transition found!")
+	for step in range(steps):
+		TM.history.cfgLst.append([])
+		#while(cfg.currState not in TM.final): <<- make into an if statement to check if in an accepting state
+		for cfg in TM.history.cfgLst[step]:
+			if cfg.currState in TM.final:
+				return cfg
+			for tr in TM.trans:
+				if tr.sourceState == cfg.currState:
+					if len(cfg.leftStr) > 0 and (tr.direction == Left and tr.appearTape == cfg.leftStr[-1]):
+						newLS = cfg.leftStr[:-1]
+						newRS = cfg.leftStr[-1] + cfg.rightStr
+						newCfg = Config(tr.targetState, TM.blank, newLS, newRS)
+						TM.history.cfgLst[step + 1].append(newCfg)
+					elif len(cfg.rightStr) > 0 and (tr.direction == Right and tr.appearTape == cfg.rightStr[0]):
+						newRS = cfg.rightStr[1:]
+						newLS = cfg.leftStr + cfg.rightStr[0] 
+						newCfg = Config(tr.targetState, TM.blank, newLS, newRS)
+						TM.history.cfgLst[step + 1].append(newCfg)
 
-	return 
+					else:
+						print("!No transition found!")
+
+	return None
 				
 #accepts
 def accepts(TM, inputString):
@@ -134,47 +141,35 @@ def accepts(TM, inputString):
 	return True
 
 def main():
-	#sourceStates, appearTape, direction, targetState, writtenTape
+
+	#sourceState, appearTape, direction, targetState, writtenTape
 	newTrans = []
-	newTrans.append(Trans(1, " ", 'R', 6, " ")) # checkRight 1 ' ' 6
-	newTrans.append(Trans(1, "*", 'R', 1, '*')) # loopRight 1 "*"
-	newTrans.append(Trans(1, "a", 'R', 2, '*')) # goRight 1 'a' '*' 2
-	newTrans.append(Trans(2, "a", 'R', 2, "a")) # loopRight 2 "a"
-	newTrans.append(Trans(2, "*", 'R', 2, "*")) # loopRight 2 "*"
-	newTrans.append(Trans(2, "b", 'R', 3, '*')) # goRight 2 'b' '*' 3
-	newTrans.append(Trans(3, "b", 'R', 3, "b")) # loopRight 3 "b"
-	newTrans.append(Trans(3, "*", 'R', 3, "*")) # loopRight 3 "*"
-	newTrans.append(Trans(3, "c", 'R', 4, '*')) # goRight 3 'c' '*' 4
-	newTrans.append(Trans(4, "c", 'R', 4, "c")) # loopRight 4 "c"
-	newTrans.append(Trans(4, "*", 'R', 4, "*")) # loopRight 4 "*"
-	newTrans.append(Trans(4, " ", 'L', 5, " ")) # checkLeft 4 ' ' 5
-	newTrans.append(Trans(5, "a", 'L', 5, "a")) # loopLeft 5 "a"
-	newTrans.append(Trans(5, "b", 'L', 5, "b")) # loopLeft 5 "b"
-	newTrans.append(Trans(5, "c", 'L', 5, "c")) # loopLeft 5 "c"
-	newTrans.append(Trans(5, "*", 'L', 5, "*")) # loopLeft 5 "*"
-	newTrans.append(Trans(5, '!', 'R', 1, "!")) #checkRight 5 '!' 1
-	# list, list, list, char, char, list, state(string?), list
-	# [1 .. 6] "abc" "abc*! " ' ' '!' trans 1 [6]
+	# State 1
+	newTrans.append(Trans(1, "a", Right, 2, "a"))
+	newTrans.append(Trans(1, "a", Right, 5, "a"))
+	# State 2
+	newTrans.append(Trans(2, "b", Right, 3, "b"))
+	newTrans.append(Trans(2, "b", Right, 2, "b"))
+	# State 3
+	newTrans.append(Trans(3, "c", Right, 2, "c"))
+	newTrans.append(Trans(3, "c", Right, 3, "c"))
+	# State 4
+	newTrans.append(Trans(4, "a", Right, 5, "a"))
+	newTrans.append(Trans(4, "a", Right, 4, "a"))
+	# State 5
+	newTrans.append(Trans(5, "b", Right, 4, "b"))
+	newTrans.append(Trans(5, "b", Right, 6, "b"))
+
+
 	#Example TM to work off of
 	newTM = TM(list(range(1,7)), "abc", "abc*! ", ' ', '!', newTrans, 1, [6])
 	print(newTM)
 	print("\n\n")
-	#newConfig = Config(1, " ", "!", "aabbcc")
-	#print(newConfig)
-	newConfig = initialConfig(newTM, "aabbcc")
-	print(newConfig)
-	print()
 	
-	newHist = History([])
-	for i in range(0,10):
-		newHist.cfgLst.append(newConfig)
+	configs(newTM, 5, "abba")
 
-	for item in newHist.cfgLst:
-		print("[" + str(item) + "]")
 
-	# config has leftStr rightStr           "!aa bbcc"
-	# initially 				  leftStr = "!" and rightStr = "aabbcc"
-	# cursor moves right one then leftStr = "!a" rightStr = "abbcc"
+
 
 if __name__ == "__main__":
 	main()
