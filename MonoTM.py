@@ -99,7 +99,7 @@ def initialConfig(TM,inputChar):
 #configs
 def configs(TM, steps, inputString):
 	accepting(TM, inputString, steps)
-	print("\n\n HISTORY: \n")
+	print("-------------- HISTORY --------------")
 	print(str(TM.history))
 	
 
@@ -127,9 +127,6 @@ def accepting(TM, inputString, steps):
 						newLS = cfg.leftStr + cfg.rightStr[0] 
 						newCfg = Config(tr.targetState, TM.blank, newLS, newRS)
 						TM.history.cfgLst[step + 1].append(newCfg)
-
-					else:
-						print("!No transition found!")
 
 	return None
 				
@@ -164,7 +161,6 @@ def main():
 	#Example TM to work off of
 	newTM = TM(list(range(1,7)), "abc", "abc*! ", ' ', '!', newTrans, 1, [6])
 	print(newTM)
-	print("\n\n")
 	
 	configs(newTM, 5, "abba")
 
