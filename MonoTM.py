@@ -94,11 +94,11 @@ class History:
 
 #initialConfig
 def initialConfig(TM,inputChar):
-	return Config(TM.start, TM.blank, TM.leftend, inputChar)
+	return Config(TM.start, TM.blank, TM.leftend, inputChar + TM.blank)
 
 #configs
 def configs(TM, steps, inputString):
-	accepting(TM, inputString, steps)
+	print(accepting(TM, inputString, steps))
 	print("-------------- HISTORY --------------")
 	print(str(TM.history))
 	
@@ -112,23 +112,64 @@ def accepting(TM, inputString, steps):
 	for step in range(steps):
 		TM.history.cfgLst.append([])
 		#while(cfg.currState not in TM.final): <<- make into an if statement to check if in an accepting state
+		numTransFound = 0
 		for cfg in TM.history.cfgLst[step]:
 			if cfg.currState in TM.final:
+				trimHist(TM)
 				return cfg
 			for tr in TM.trans:
 				if tr.sourceState == cfg.currState:
 					if len(cfg.leftStr) > 0 and (tr.direction == Left and tr.appearTape == cfg.leftStr[-1]):
+						print("left tr found: " + str(tr))
+						numTransFound += 1
 						newLS = cfg.leftStr[:-1]
 						newRS = cfg.leftStr[-1] + cfg.rightStr
 						newCfg = Config(tr.targetState, TM.blank, newLS, newRS)
 						TM.history.cfgLst[step + 1].append(newCfg)
+						if newCfg.currState in TM.final:
+							trimHist(TM)
+							return newCfg
 					elif len(cfg.rightStr) > 0 and (tr.direction == Right and tr.appearTape == cfg.rightStr[0]):
+						print("right tr found: " + str(tr))
+						numTransFound += 1
 						newRS = cfg.rightStr[1:]
 						newLS = cfg.leftStr + cfg.rightStr[0] 
 						newCfg = Config(tr.targetState, TM.blank, newLS, newRS)
 						TM.history.cfgLst[step + 1].append(newCfg)
-
+						if newCfg.currState in TM.final:
+							trimHist(TM)
+							return newCfg
+					elif len(cfg.rightStr) > 0 and (tr.direction == Left and tr.appearTape == cfg.rightStr[0] and tr.appearTape == TM.blank):
+						print("right tr found: " + str(tr))
+						numTransFound += 1
+						newLS = cfg.leftStr[:-1]
+						newRS = cfg.leftStr[-1] + cfg.rightStr
+						newCfg = Config(tr.targetState, TM.blank, newLS, newRS)
+						TM.history.cfgLst[step + 1].append(newCfg)
+						if newCfg.currState in TM.final:
+							trimHist(TM)
+							return newCfg
+					elif len(cfg.leftStr) > 0 and (tr.direction == Right and tr.appearTape == cfg.leftStr[-1] and tr.appearTape == TM.leftend):
+						print("right tr found: " + str(tr))
+						numTransFound += 1
+						newRS = cfg.rightStr[1:]
+						newLS = cfg.leftStr + cfg.rightStr[0] 
+						newCfg = Config(tr.targetState, TM.blank, newLS, newRS)
+						TM.history.cfgLst[step + 1].append(newCfg)
+						if newCfg.currState in TM.final:
+							trimHist(TM)
+							return newCfg
+		if numTransFound == 0:
+			trimHist(TM)
+			return "None"
 	return None
+
+def trimHist(TM):
+	retList = []
+	for list in TM.history.cfgLst:
+		if len(list) > 0:
+			retList.append(list)
+	TM.history.cfgLst = retList
 				
 #accepts
 def accepts(TM, inputString):
@@ -140,32 +181,77 @@ def accepts(TM, inputString):
 def main():
 
 	#sourceState, appearTape, direction, targetState, writtenTape
-	newTrans = []
+	transOne = []
 	# State 1
-	newTrans.append(Trans(1, "a", Right, 2, "a"))
-	newTrans.append(Trans(1, "a", Right, 5, "a"))
+	transOne.append(Trans(1, "a", Right, 2, "a"))
+	transOne.append(Trans(1, "a", Right, 5, "a"))
 	# State 2
-	newTrans.append(Trans(2, "b", Right, 3, "b"))
-	newTrans.append(Trans(2, "b", Right, 2, "b"))
+	transOne.append(Trans(2, "b", Right, 3, "b"))
+	transOne.append(Trans(2, "b", Right, 2, "b"))
 	# State 3
-	newTrans.append(Trans(3, "c", Right, 2, "c"))
-	newTrans.append(Trans(3, "c", Right, 3, "c"))
+	transOne.append(Trans(3, "c", Right, 2, "c"))
+	transOne.append(Trans(3, "c", Right, 3, "c"))
 	# State 4
-	newTrans.append(Trans(4, "a", Right, 5, "a"))
-	newTrans.append(Trans(4, "a", Right, 4, "a"))
+	transOne.append(Trans(4, "a", Right, 5, "a"))
+	transOne.append(Trans(4, "a", Right, 4, "a"))
 	# State 5
-	newTrans.append(Trans(5, "b", Right, 4, "b"))
-	newTrans.append(Trans(5, "b", Right, 6, "b"))
+	transOne.append(Trans(5, "b", Right, 4, "b"))
+	transOne.append(Trans(5, "b", Right, 6, "b"))
 
 
 	#Example TM to work off of
-	newTM = TM(list(range(1,7)), "abc", "abc*! ", ' ', '!', newTrans, 1, [6])
-	print(newTM)
+	#newTM = TM(list(range(1,7)), "abc", "abc*! ", ' ', '!', transOne, 1, [6])
+	#print(newTM)
 	
-	configs(newTM, 5, "abba")
+	#configs(newTM, 5, "abba")
+
+	transTwo = []
+	transTwo.append(Trans(1, "a", Right, 2, "*"))
+	transTwo.append(Trans(1, "a", Right, 3, "*"))
+	transTwo.append(Trans(1, "b", Right, 12, "b"))
+	transTwo.append(Trans(1, "c", Right, 12, "c"))
+	transTwo.append(Trans(1, " ", Left, 12, " "))
+	transTwo.append(Trans(2, "b", Right, 4, "*"))
+	transTwo.append(Trans(2, "a", Right, 12, "a"))
+	transTwo.append(Trans(2, " ", Left, 12, " "))
+	transTwo.append(Trans(3, "c", Right, 5, "*"))
+	transTwo.append(Trans(3, "a", Right, 12, "a"))
+	transTwo.append(Trans(3, " ", Left, 12, " "))
+	transTwo.append(Trans(4, "c", Right, 6, "*"))
+	transTwo.append(Trans(4, "a", Right, 7, "*"))
+	transTwo.append(Trans(4, "b", Right, 12, "*"))
+	transTwo.append(Trans(4, " ", Left, 12, " "))
+	transTwo.append(Trans(5, "b", Right, 8, "*"))
+	transTwo.append(Trans(5, "a", Right, 9, "*"))
+	transTwo.append(Trans(5, "c", Right, 12, "*"))
+	transTwo.append(Trans(5, " ", Left, 12, " "))
+	transTwo.append(Trans(6, " ", Left, 10, " "))
+	transTwo.append(Trans(6, "c", Right, 12, "c"))
+	transTwo.append(Trans(7, " ", Left, 10, " "))
+	transTwo.append(Trans(7, "a", Right, 12, "a"))
+	transTwo.append(Trans(8, " ", Left, 10, " "))
+	transTwo.append(Trans(8, "b", Right, 12, "b"))
+	transTwo.append(Trans(9, "a", Right, 12, "a"))
+	transTwo.append(Trans(9, " ", Left, 10, " "))
+	transTwo.append(Trans(10,"*", Left, 10,"*"))
+	transTwo.append(Trans(10,"a", Left, 10,"a"))
+	transTwo.append(Trans(10,"b", Left, 10,"b"))
+	transTwo.append(Trans(10,"c", Left, 10,"c"))
+	transTwo.append(Trans(10,"!", Right, 11,"!"))
+
+	TMTwo = TM(list(range(1,13)), "abc", "abc*! ", ' ', '!', transTwo, 1, [11])
+	print(TMTwo)
+	
+	configs(TMTwo, 20, "aca")
 
 
-
+	#TMTwo.history = History(TMTwo)
+	#TMTwo.history.cfgLst.append([Config(TMTwo.start, TMTwo.blank, TMTwo.leftend, "acc" + TMTwo.blank)])
+	#for i in range (10):
+	#	TMTwo.history.cfgLst.append([])
+	#print(TMTwo.history)
+	#trimHist(TMTwo)
+	#print(TMTwo.history)
 
 if __name__ == "__main__":
 	main()
