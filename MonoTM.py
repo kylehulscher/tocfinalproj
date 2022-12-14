@@ -98,7 +98,10 @@ def initialConfig(TM,inputChar):
 
 #configs
 def configs(TM, steps, inputString):
-	print(accepting(TM, inputString, steps))
+	if not accepts(TM, inputString):
+		print("Error, Invalid input string: " + inputString)
+		return
+	print("Accepting config: " + str(accepting(TM, inputString, steps)))
 	print("-------------- HISTORY --------------")
 	print(str(TM.history))
 	
@@ -120,7 +123,6 @@ def accepting(TM, inputString, steps):
 			for tr in TM.trans:
 				if tr.sourceState == cfg.currState:
 					if len(cfg.leftStr) > 0 and (tr.direction == Left and tr.appearTape == cfg.leftStr[-1]):
-						print("left tr found: " + str(tr))
 						numTransFound += 1
 						newLS = cfg.leftStr[:-1]
 						newRS = cfg.leftStr[-1] + cfg.rightStr
@@ -130,7 +132,6 @@ def accepting(TM, inputString, steps):
 							trimHist(TM)
 							return newCfg
 					elif len(cfg.rightStr) > 0 and (tr.direction == Right and tr.appearTape == cfg.rightStr[0]):
-						print("right tr found: " + str(tr))
 						numTransFound += 1
 						newRS = cfg.rightStr[1:]
 						newLS = cfg.leftStr + cfg.rightStr[0] 
@@ -140,20 +141,18 @@ def accepting(TM, inputString, steps):
 							trimHist(TM)
 							return newCfg
 					elif len(cfg.rightStr) > 0 and (tr.direction == Left and tr.appearTape == cfg.rightStr[0] and tr.appearTape == TM.blank):
-						print("right tr found: " + str(tr))
 						numTransFound += 1
-						newLS = cfg.leftStr[:-1]
-						newRS = cfg.leftStr[-1] + cfg.rightStr
+						newLS = cfg.leftStr
+						newRS = cfg.rightStr
 						newCfg = Config(tr.targetState, TM.blank, newLS, newRS)
 						TM.history.cfgLst[step + 1].append(newCfg)
 						if newCfg.currState in TM.final:
 							trimHist(TM)
 							return newCfg
 					elif len(cfg.leftStr) > 0 and (tr.direction == Right and tr.appearTape == cfg.leftStr[-1] and tr.appearTape == TM.leftend):
-						print("right tr found: " + str(tr))
 						numTransFound += 1
-						newRS = cfg.rightStr[1:]
-						newLS = cfg.leftStr + cfg.rightStr[0] 
+						newRS = cfg.rightStr
+						newLS = cfg.leftStr
 						newCfg = Config(tr.targetState, TM.blank, newLS, newRS)
 						TM.history.cfgLst[step + 1].append(newCfg)
 						if newCfg.currState in TM.final:
@@ -174,37 +173,12 @@ def trimHist(TM):
 #accepts
 def accepts(TM, inputString):
 	for ch in inputString:
-		if ch not in TM.alphabet:
+		if ch not in TM.inputs:
 			return False
 	return True
 
 def main():
-
-	#sourceState, appearTape, direction, targetState, writtenTape
-	transOne = []
-	# State 1
-	transOne.append(Trans(1, "a", Right, 2, "a"))
-	transOne.append(Trans(1, "a", Right, 5, "a"))
-	# State 2
-	transOne.append(Trans(2, "b", Right, 3, "b"))
-	transOne.append(Trans(2, "b", Right, 2, "b"))
-	# State 3
-	transOne.append(Trans(3, "c", Right, 2, "c"))
-	transOne.append(Trans(3, "c", Right, 3, "c"))
-	# State 4
-	transOne.append(Trans(4, "a", Right, 5, "a"))
-	transOne.append(Trans(4, "a", Right, 4, "a"))
-	# State 5
-	transOne.append(Trans(5, "b", Right, 4, "b"))
-	transOne.append(Trans(5, "b", Right, 6, "b"))
-
-
-	#Example TM to work off of
-	#newTM = TM(list(range(1,7)), "abc", "abc*! ", ' ', '!', transOne, 1, [6])
-	#print(newTM)
-	
-	#configs(newTM, 5, "abba")
-
+	# transTwo defines a set of transitions for a TM
 	transTwo = []
 	transTwo.append(Trans(1, "a", Right, 2, "*"))
 	transTwo.append(Trans(1, "a", Right, 3, "*"))
@@ -239,19 +213,43 @@ def main():
 	transTwo.append(Trans(10,"c", Left, 10,"c"))
 	transTwo.append(Trans(10,"!", Right, 11,"!"))
 
+	# TMTwo represents a tm with 12 nodes, alphabet "abc", tape symbols "abc*! ", blank " ", leftend character "!", start state of 1 and end state of 11
+	# TMTwo accepts 4 strings, aba, abc, aca, acb and rejects everything else (very useful machine)
 	TMTwo = TM(list(range(1,13)), "abc", "abc*! ", ' ', '!', transTwo, 1, [11])
+	print("---------------- New TM(TMTwo) Created (createTM()/showTM() examples)----------------")
 	print(TMTwo)
-	
+	print()
+
+	print("---------------- Running TMTwo on valid string aca (20 steps) ----------------")
 	configs(TMTwo, 20, "aca")
+	print()
+
+	print("---------------- Running TMTwo on valid string abc (20 steps) ----------------")
+	configs(TMTwo, 20, "aca")
+	print()
+
+	print("---------------- Running TMTwo on valid string abc (5 steps) ----------------")
+	configs(TMTwo, 5, "aca")
+	print()
+
+	print("---------------- Running TMTwo on invalid string abb (20 steps) ----------------")
+	configs(TMTwo, 20, "abb")
+	print()
+
+	print("---------------- Running TMTwo on invalid string "" (20 steps) ----------------")
+	configs(TMTwo, 20, "")
+	print()
+
+	print("---------------- initialConfig()/showConfig() example with TMTwo and input aba ----------------")
+	print(initialConfig(TMTwo, "aba"))
+	print()
+
+	print("---------------- Running TMTwo on invalid alphabet input xyz (20 steps) (accepts() test) ----------------")
+	configs(TMTwo, 20, "xyz")
+	print()
 
 
-	#TMTwo.history = History(TMTwo)
-	#TMTwo.history.cfgLst.append([Config(TMTwo.start, TMTwo.blank, TMTwo.leftend, "acc" + TMTwo.blank)])
-	#for i in range (10):
-	#	TMTwo.history.cfgLst.append([])
-	#print(TMTwo.history)
-	#trimHist(TMTwo)
-	#print(TMTwo.history)
+
 
 if __name__ == "__main__":
 	main()
